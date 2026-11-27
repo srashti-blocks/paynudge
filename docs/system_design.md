@@ -129,7 +129,7 @@ erDiagram
 
     BUSINESSES {
         int id PK
-        int user_id FK_UK
+        int user_id FK "UNIQUE"
         varchar name
         varchar phone
         text address
