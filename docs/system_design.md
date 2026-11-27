@@ -27,20 +27,21 @@ The main objective is to reduce late payments and simplify invoice management.
 
 3. Technology Stack
 
-Component| Technology
-Frontend| React
-Backend| Python + FastAPI
-Database| PostgreSQL
-ORM| SQLAlchemy
-Data Validation| Pydantic
-Database Migrations| Alembic
-Background Jobs| Celery
-Message Broker| Redis
-Payment Gateway| Razorpay (Test Mode)
-Email Service| SendGrid (proposed)
-Testing| Pytest
-Containerization| Docker
-CI/CD| GitHub Actions
+| Component | Technology |
+| :--- | :--- |
+| Frontend | React |
+| Backend | Python + FastAPI |
+| Database | PostgreSQL |
+| ORM | SQLAlchemy |
+| Data Validation | Pydantic |
+| Database Migrations | Alembic |
+| Background Jobs | Celery |
+| Message Broker | Redis |
+| Payment Gateway | Razorpay (Test Mode) |
+| Email Service | SendGrid (proposed) |
+| Testing | Pytest |
+| Containerization | Docker |
+| CI/CD | GitHub Actions |
 
 Note: FastAPI and SendGrid are proposed changes requiring Tech Lead approval. The original project specification specifies Node.js + Express and does not specify an email provider.
 
@@ -57,7 +58,7 @@ The system follows a client-server architecture.
 - Razorpay handles online payments and sends payment events through webhooks.
 
 4.1 Architecture Diagram
-
+```mermaid
 flowchart TD
     U[Business Owner]
     F[React Frontend]
@@ -79,7 +80,7 @@ flowchart TD
     API -->|Create Payment Order| RP
     RP -->|Payment Webhook| API
     API -->|Update Payment and Invoice| DB
-
+```
 5. Database Design
 
 The database uses a relational model with seven tables:
@@ -104,6 +105,10 @@ Multiple businesses per user can be considered in a future version.
 
 5.2 Entity Relationship Diagram
 
+
+### 5.2 Entity Relationship Diagram
+
+```mermaid
 erDiagram
     USERS ||--|| BUSINESSES : owns
     BUSINESSES ||--o{ CUSTOMERS : manages
@@ -188,56 +193,61 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
+```
 
 5.3 Table Specifications
 
 Users
 
-Column| Data Type| Constraint
-id| BIGINT| Primary Key
-name| VARCHAR(100)| NOT NULL
-email| VARCHAR(255)| UNIQUE, NOT NULL
-password_hash| TEXT| NOT NULL
-created_at| TIMESTAMP| NOT NULL
-updated_at| TIMESTAMP| NOT NULL
+| Column | Data Type | Constraint |
+| :--- | :--- | :--- |
+| `id` | `BIGINT` | Primary Key |
+| `name` | `VARCHAR(100)` | NOT NULL |
+| `email` | `VARCHAR(255)` | UNIQUE, NOT NULL |
+| `password_hash` | `TEXT` | NOT NULL |
+| `created_at` | `TIMESTAMP` | NOT NULL |
+| `updated_at` | `TIMESTAMP` | NOT NULL |
 
 Businesses
 
-Column| Data Type| Constraint
-id| BIGINT| Primary Key
-user_id| BIGINT| FK, UNIQUE, NOT NULL
-name| VARCHAR(150)| NOT NULL
-phone| VARCHAR(20)| NOT NULL
-address| TEXT| NULL
-created_at| TIMESTAMP| NOT NULL
-updated_at| TIMESTAMP| NOT NULL
+| Column | Data Type | Constraint |
+| :--- | :--- | :--- |
+| `id` | `BIGINT` | Primary Key |
+| `user_id` | `BIGINT` | FK, UNIQUE, NOT NULL |
+| `name` | `VARCHAR(150)` | NOT NULL |
+| `phone` | `VARCHAR(20)` | NOT NULL |
+| `address` | `TEXT` | NULL |
+| `created_at` | `TIMESTAMP` | NOT NULL |
+| `updated_at` | `TIMESTAMP` | NOT NULL |
 
 Customers
 
-Column| Data Type| Constraint
-id| BIGINT| Primary Key
-business_id| BIGINT| FK, NOT NULL
-name| VARCHAR(150)| NOT NULL
-email| VARCHAR(255)| NULL
-phone| VARCHAR(20)| NULL
-created_at| TIMESTAMP| NOT NULL
-updated_at| TIMESTAMP| NOT NULL
+| Column | Data Type | Constraint |
+| :--- | :--- | :--- |
+| `id` | `BIGINT` | Primary Key |
+| `business_id` | `BIGINT` | FK, NOT NULL |
+| `name` | `VARCHAR(150)` | NOT NULL |
+| `email` | `VARCHAR(255)` | NULL |
+| `phone` | `VARCHAR(20)` | NULL |
+| `created_at` | `TIMESTAMP` | NOT NULL |
+| `updated_at` | `TIMESTAMP` | NOT NULL |
 
 Invoices
 
-Column| Data Type| Constraint
-id| BIGINT| Primary Key
-business_id| BIGINT| FK, NOT NULL
-customer_id| BIGINT| FK, NOT NULL
-invoice_number| VARCHAR(50)| NOT NULL
-public_token| VARCHAR(128)| UNIQUE, NOT NULL
-total_amount| NUMERIC(12,2)| NOT NULL
-currency| CHAR(3)| Default INR
-issue_date| DATE| NOT NULL
-due_date| DATE| NOT NULL
-status| VARCHAR(20)| NOT NULL
-created_at| TIMESTAMP| NOT NULL
-updated_at| TIMESTAMP| NOT NULL
+| Column | Data Type | Constraint |
+| :--- | :--- | :--- |
+| `id` | `BIGINT` | Primary Key |
+| `business_id` | `BIGINT` | FK, NOT NULL |
+| `customer_id` | `BIGINT` | FK, NOT NULL |
+| `invoice_number` | `VARCHAR(50)` | NOT NULL |
+| `public_token` | `VARCHAR(128)` | UNIQUE, NOT NULL |
+| `total_amount` | `NUMERIC(12,2)` | NOT NULL |
+| `currency` | `CHAR(3)` | Default `INR` |
+| `issue_date` | `DATE` | NOT NULL |
+| `due_date` | `DATE` | NOT NULL |
+| `status` | `VARCHAR(20)` | NOT NULL |
+| `created_at` | `TIMESTAMP` | NOT NULL |
+| `updated_at` | `TIMESTAMP` | NOT NULL |
 
 Unique constraint: "(business_id, invoice_number)".
 
@@ -245,38 +255,41 @@ The public token will be generated using a cryptographically secure random gener
 
 Invoice Items
 
-Column| Data Type| Constraint
-id| BIGINT| Primary Key
-invoice_id| BIGINT| FK, NOT NULL
-description| VARCHAR(255)| NOT NULL
-quantity| INTEGER| NOT NULL
-unit_price| NUMERIC(12,2)| NOT NULL
-amount| NUMERIC(12,2)| NOT NULL
+| Column | Data Type | Constraint |
+| :--- | :--- | :--- |
+| `id` | `BIGINT` | Primary Key |
+| `invoice_id` | `BIGINT` | FK, NOT NULL |
+| `description` | `VARCHAR(255)` | NOT NULL |
+| `quantity` | `INTEGER` | NOT NULL |
+| `unit_price` | `NUMERIC(12,2)` | NOT NULL |
+| `amount` | `NUMERIC(12,2)` | NOT NULL |
 
 Payments
 
-Column| Data Type| Constraint
-id| BIGINT| Primary Key
-invoice_id| BIGINT| FK, NOT NULL
-razorpay_order_id| VARCHAR(100)| UNIQUE
-razorpay_payment_id| VARCHAR(100)| UNIQUE
-amount| NUMERIC(12,2)| NOT NULL
-currency| CHAR(3)| Default INR
-status| VARCHAR(20)| NOT NULL
-paid_at| TIMESTAMP| NULL
-created_at| TIMESTAMP| NOT NULL
+| Column | Data Type | Constraint |
+| :--- | :--- | :--- |
+| `id` | `BIGINT` | Primary Key |
+| `invoice_id` | `BIGINT` | FK, NOT NULL |
+| `razorpay_order_id` | `VARCHAR(100)` | UNIQUE |
+| `razorpay_payment_id` | `VARCHAR(100)` | UNIQUE |
+| `amount` | `NUMERIC(12,2)` | NOT NULL |
+| `currency` | `CHAR(3)` | Default `INR` |
+| `status` | `VARCHAR(20)` | NOT NULL |
+| `paid_at` | `TIMESTAMP` | NULL |
+| `created_at` | `TIMESTAMP` | NOT NULL |
 
 Reminders
 
-Column| Data Type| Constraint
-id| BIGINT| Primary Key
-invoice_id| BIGINT| FK, NOT NULL
-scheduled_at| TIMESTAMP| NOT NULL
-sent_at| TIMESTAMP| NULL
-status| VARCHAR(20)| NOT NULL
-channel| VARCHAR(20)| Default email
-created_at| TIMESTAMP| NOT NULL
-updated_at| TIMESTAMP| NOT NULL
+| Column | Data Type | Constraint |
+| :--- | :--- | :--- |
+| `id` | `BIGINT` | Primary Key |
+| `invoice_id` | `BIGINT` | FK, NOT NULL |
+| `scheduled_at` | `TIMESTAMP` | NOT NULL |
+| `sent_at` | `TIMESTAMP` | NULL |
+| `status` | `VARCHAR(20)` | NOT NULL |
+| `channel` | `VARCHAR(20)` | Default `email` |
+| `created_at` | `TIMESTAMP` | NOT NULL |
+| `updated_at` | `TIMESTAMP` | NOT NULL |
 
 5.4 Money Handling
 
@@ -325,7 +338,7 @@ The invoice lifecycle will use the following statuses:
 - "cancelled": Invoice cancelled by the business owner.
 
 6.2 Status Transition Diagram
-
+```mermaid
 stateDiagram-v2
     [*] --> Draft
 
@@ -341,6 +354,7 @@ stateDiagram-v2
 
     Paid --> [*]
     Cancelled --> [*]
+```
 
 Invalid transitions will be rejected by the backend.
 
@@ -391,6 +405,42 @@ Customer Payment Flow
 11. Payment record is updated.
 12. Invoice status changes to "paid".
 
+
+```mermaid
+sequenceDiagram
+    actor Owner as Business Owner
+    actor Customer
+    participant FE as React Frontend
+    participant API as FastAPI Backend
+    participant DB as PostgreSQL
+    participant RP as Razorpay
+
+    Owner->>FE: Create & send invoice
+    FE->>API: POST /api/invoices/{id}/send
+    API->>DB: Save invoice & generate public_token
+    API-->>Owner: Public link (/invoice/{public_token})
+
+    Customer->>FE: Open public invoice link
+    FE->>API: GET /api/public/invoices/{token}
+    API->>DB: Fetch safe invoice details
+    API-->>FE: Return invoice data
+
+    Customer->>FE: Click "Pay Now"
+    FE->>API: POST /api/public/invoices/{token}/create-order
+    API->>RP: Create order (amount in paise)
+    RP-->>API: Return razorpay_order_id
+    API->>DB: Create pending payment record
+    API-->>FE: Return order details
+
+    Customer->>RP: Complete payment in Checkout
+    RP-->>FE: Payment success callback
+    FE->>API: POST /api/public/invoices/{token}/verify-payment
+    RP--)API: POST /api/payments/webhook (server-to-server)
+    API->>API: Verify signature & check idempotency
+    API->>DB: Mark payment paid & invoice "paid"
+    API-->>FE: Payment confirmed
+```
+
 Public invoice endpoints will expose only the information required for invoice viewing and payment. Business owner credentials and internal records will never be exposed.
 
 8. API Design
@@ -399,47 +449,52 @@ All APIs use the "/api" prefix and JSON request/response formats.
 
 8.1 Authentication APIs
 
-Method| Endpoint| Description
-POST| "/api/auth/register"| Register a user
-POST| "/api/auth/login"| Authenticate user
-GET| "/api/auth/me"| Retrieve authenticated user details
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/auth/register` | Register a user |
+| `POST` | `/api/auth/login` | Authenticate user |
+| `GET` | `/api/auth/me` | Retrieve authenticated user details |
 
 8.2 Customer APIs
 
 All customer endpoints require authentication and automatically use the authenticated user's business.
 
-Method| Endpoint| Description
-POST| "/api/customers"| Create customer
-GET| "/api/customers"| List customers
-GET| "/api/customers/{customer_id}"| Retrieve customer
-PUT| "/api/customers/{customer_id}"| Update customer
-DELETE| "/api/customers/{customer_id}"| Delete customer if no invoices exist
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/customers` | Create customer |
+| `GET` | `/api/customers` | List customers |
+| `GET` | `/api/customers/{customer_id}` | Retrieve customer |
+| `PUT` | `/api/customers/{customer_id}` | Update customer |
+| `DELETE` | `/api/customers/{customer_id}` | Delete customer if no invoices exist |
 
 8.3 Invoice APIs
 
-Method| Endpoint| Description
-POST| "/api/invoices"| Create invoice
-GET| "/api/invoices"| List invoices
-GET| "/api/invoices/{invoice_id}"| Retrieve invoice
-PUT| "/api/invoices/{invoice_id}"| Update eligible invoice
-POST| "/api/invoices/{invoice_id}/send"| Send invoice to customer
-POST| "/api/invoices/{invoice_id}/cancel"| Cancel invoice
-GET| "/api/invoices/{invoice_id}/payments"| Retrieve invoice payments
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/invoices` | Create invoice |
+| `GET` | `/api/invoices` | List invoices |
+| `GET` | `/api/invoices/{invoice_id}` | Retrieve invoice |
+| `PUT` | `/api/invoices/{invoice_id}` | Update eligible invoice |
+| `POST` | `/api/invoices/{invoice_id}/send` | Send invoice to customer |
+| `POST` | `/api/invoices/{invoice_id}/cancel` | Cancel invoice |
+| `GET` | `/api/invoices/{invoice_id}/payments` | Retrieve invoice payments |
 
 8.4 Public Invoice APIs
 
 These endpoints do not require customer authentication. Access is controlled by the secure public token.
 
-Method| Endpoint| Description
-GET| "/api/public/invoices/{token}"| Retrieve public invoice details
-POST| "/api/public/invoices/{token}/create-order"| Create Razorpay order for invoice
-POST| "/api/public/invoices/{token}/verify-payment"| Verify checkout payment
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/public/invoices/{token}` | Retrieve public invoice details |
+| `POST` | `/api/public/invoices/{token}/create-order` | Create Razorpay order for invoice |
+| `POST` | `/api/public/invoices/{token}/verify-payment` | Verify checkout payment |
 
 8.5 Payment APIs
 
-Method| Endpoint| Description
-GET| "/api/payments/{payment_id}"| Retrieve payment details
-POST| "/api/payments/webhook"| Receive Razorpay payment events
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/payments/{payment_id}` | Retrieve payment details |
+| `POST` | `/api/payments/webhook` | Receive Razorpay payment events |
 
 The webhook endpoint is server-to-server and does not use normal user authentication. It must verify Razorpay's webhook signature using the configured webhook secret.
 
@@ -447,10 +502,11 @@ Duplicate webhook events will be handled idempotently so that the same payment i
 
 8.6 Reminder APIs
 
-Method| Endpoint| Description
-GET| "/api/reminders"| List reminders
-GET| "/api/invoices/{invoice_id}/reminders"| List reminders for invoice
-POST| "/api/reminders/{reminder_id}/retry"| Retry an eligible failed reminder
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/reminders` | List reminders |
+| `GET` | `/api/invoices/{invoice_id}/reminders` | List reminders for invoice |
+| `POST` | `/api/reminders/{reminder_id}/retry` | Retry an eligible failed reminder |
 
 8.7 Pagination and Filtering
 
@@ -476,11 +532,12 @@ Celery and Redis will manage scheduled reminder tasks.
 
 The proposed MVP reminder schedule is:
 
-Timing| Action
-3 days before due date| Send payment reminder
-On due date| Send payment reminder
-3 days after due date| Send overdue reminder
-7 days after due date| Send overdue reminder
+| Timing | Action |
+| :--- | :--- |
+| 3 days before due date | Send payment reminder |
+| On due date | Send payment reminder |
+| 3 days after due date | Send overdue reminder |
+| 7 days after due date | Send overdue reminder |
 
 9.2 Reminder Configuration
 
